@@ -1,30 +1,24 @@
-##  Performing a docker build within OpenShift
+##  Performing an S2I (source to image) build within OpenShift
 
 Clone this git repo to your local disk and then use that to create a publicly visible git rep on github.com (the public one, not the IBM enterprise git repo).
-It is possible to get this working from the IBM enterprise git repo, but that is a separate excercise. After this code is in the github.com repo, run the 
-following instructions.
+After this code is in the github.com repo, work through the task specified. Note that you will need the maven command line working locally, and
+a locally installed Java 11 JDK, in order to make the first 3 steps of this exercise work. In order to make the maven command line work, you
+will have to set the JAVA_HOME environment variable to point to the location of the JDK. If you cannot get this working, it is still possible
+to complete the rest of this exercise (step 4 and onwards), but you will not have a reference working application to compare to.
 
-This is extending the material in exercise 1 (building from base container). There a base image was provided in box, and you performed a docker build using that base image in your local
-machine. Here, that base image that was provided in exercise 1 will be built within OpenShift. The provided Dockerfile will help you with that. In order to get started, clone this git 
-repo to your local disk and then use that to create a publicly visible git rep on github.com (the public one, not the IBM enterprise git repo). It is also possible to get this working 
-from the IBM enterprise git repo, but that is a separate excercise. After this code is in the github.com repo, run the following instructions.
-
-```
-oc new-app --name=simple-stuff https://github.com/<your github.com id>/docker-builds-openshift.git --as-deployment-config
-oc create route edge --service=simple-stuff
-```
-
-And then, `curl -k https://<hostname for route>/simple-stuff/simple/simon`. This should produce the string "/my-special-folder does not exist"
 
 ## Task
 
-0. Delete all existing artifiacts from the previous steps. 
-
-1. In the docker build, create a directory called /my-special-folder. Copy the Dockerfile in this git repo into that folder. Note that you will need to create this
-folder as the root user, otherwise, your creation of the directory will fail during the build.
-2. Repeat the new-app, expose, and patch commands provided at the top of this file.
-3. Repeat steps 1 and 2, but this time, call the app "even-simpler". What you have done with this step is to use the same git repo to create two different running instances (or applications) 
-of the code.
-4. Look for the image stream corresponding to "even-simpler". Use the "new-app" command and point to this imagestream and create a third instance of the application. Call this application
-instance "simplest-of-all".
-4. Provide the output of the "curl" command shown above for the "simple", "even-simpler", and "simplest-of-all" apps.
+1. Change directory to the "complete" sub-directory within the repo. Perform a maven build ("mvn package") and ensure that it completes successfully.
+2. Start the spring boot app. In the "target" sub-directory, you will find a <code>spring-boot-0.0.1-SNAPSHOT.jar</code> jar file. Use a java 11 JRE to start this Spring Boot application.
+3. Validate that this works correctly by using your browser to go to http://localhost:8080/ . This should print "Greetings from Spring Boot!".
+4. Perform an S2I build by using the new-app command and using the "java:11" imagestream. This imagestream is a builder image for Java code -
+particularly, code that will be built using maven. Specify the name of the app as "sample-boot-app". Note that:
+    1.  You should use the "--as-deployment-config" flag on the new-app command.
+    2.  You should also specify the "--context-dir" flag, with the "complete" sub-directory specified as its value
+5. Observe the build by using the "oc logs" command to look at the buildconfig for "sample-boot-app".
+6. After the build is done running, use the "oc get pods" command to observe the status of the application. Initially, you will see a deploy
+pod instantiated. After it is done running, the pod for the actual application will be instantiated.
+7. Observe the logs of the application as it starts up, using the "oc logs" command.
+8. Create a route for the application by using the "oc create route edge" command. This will produce an https endpoint that you can access via
+the browser. Check to see that you get a message at the root URI saying "Greetings from Spring Boot!".
